@@ -36,10 +36,10 @@ Make a copy of build architect and modify until it looks like:
     ...
 ```
 
-## Add `/apps/some-api/assets`
-Add a folder where you will store files like `Dockerfile` and files that your application may need for execution or containerization... in my case I named it `assets`
+## Add `/apps/some-api/package`
+Add a folder where you will store files like `Dockerfile` and files that your application may need for execution or containerization... in my case I named it `package`
 
-## Add `/apps/some-api/assets/Dockerfile`
+## Add `/apps/some-api/package/Dockerfile`
 This file can be simple as:
 ```
 FROM node:12
@@ -58,54 +58,27 @@ CMD [ "node", "main.js" ]
 ```
 
 ## Add scripts for applications
-Here you will store the scripts to package or deploy your nest application, anyone with higher understanding on bash scripting can easily do a single script that accepts a parameter for application name and do validations and more, for now we will keep this as an example. You may need to prepend `npx` to nx commands to be able to run or use `package.json` included scripts
+Here you will store the scripts to package your nest application.
 
-### `/scripts/some-api/package.sh`
+### Add `/tools/scripts/package-api.sh`
+This will be your entry point
+Parameters:
+  [App Name] this should be your app name ex: some-api
+[package-api.sh](https://github.com/reajuria/documentation/blob/main/package-api.sh)
+
+### Add `/tools/scripts/fill-dependencies.js`
+This is used to fill nest defaults packages and packages that may not have been referenced inside the source code or collected by package process
+[fill-dependencies.js](https://github.com/reajuria/documentation/blob/main/fill-dependencies.js)
+
+### Add `/apps/some-api/install.sh` [Optional]
+For adding your internal publishable libraries to the `package.json` and `package-lock.json` in your dist folder. Example:
 ```
-# Cleanup
-rm -rf ./dist/apps/some-api
-
-# Generate package.json and remove remaining directories
-nx package some-api
-rm -rf ./dist/apps/some-api/apps
-rm -rf ./dist/apps/some-api/libs
-
-# Build Node/NestJS Application
-nx build some-api
-
-# Install node packages to create package-lock.json then cleanup node_modules
-cd ./dist/apps/some-api/
-npm install
-rm -rf ./node_modules
-cd ../../..
-
-# Copy Dockerfile or other needed files
-cp ./apps/some-api/assets/* ./dist/apps/some-api/
+npm install --save @org-name/lib-common @org-name/lib-feature1 @org-name/lib-feature2
 ```
 
-### `/scripts/some-api/cloud-build.sh`
-```
-cd ./dist/apps/some-api/
-npm run cloud-build
-cd ../../..
-```
-
-### `/scripts/some-api/cloud-deploy.sh`
-```
-cd ./dist/apps/some-api/
-npm run cloud-deploy
-cd ../../..
-```
-
-## Run commands from mono-repo directory
-`sh ./scripts/some-api/package.sh`
-After running it you will get an application folder that has `package.json` and `package-lock.json` that can be included in CI/CD, publish to a package repository or create docker images, is up to everyone needs.
-
-You can manually trigger a build for a container image
-`sh ./scripts/some-api/cloud-build.sh`
-
-Then deploy it
-`sh ./scripts/some-api/cloud-deploy.sh`
+## Run commands from root directory
+`sh ./tools/scripts/package-api.sh some-api`
+You will get an application folder that has `package.json` and `package-lock.json` that can be included in CI/CD, publish to a package repository or create docker images, is up to everyone needs.
 
 
 There may be more ways to package and publish applications and there may be ways to trigger builds when applications are affected by changes, if anyone knows please share them 👋🏻 
